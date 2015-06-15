@@ -173,7 +173,8 @@
                             <a href="[% script_name %]?op=close&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="closebutton"><i class="icon-remove-sign"></i> Close this basket</a>
                         </div>
                     [% END %]
-                        <div class="btn-group"><a href="[% script_name %]?op=export&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="exportbutton"><i class="icon-download"></i> Export this basket as CSV</a></div>
+                        <div class="btn-group"><a href="[% script_name %]?op=export&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="exportbutton"><i class="icon-download"></i> Export as CSV</a></div>
+                        <div class="btn-group"><a href="[% script_name %]?op=email&amp;basketno=[% basketno %]" class="btn btn-small" id="emailvendorbutton"><i class="icon-download"></i> E-mail to vendor</a></div>
                 </div>
 <!-- Modal for confirm deletion box-->
                 <div class="modal hide" id="deleteBasketModal" tabindex="-1" role="dialog" aria-labelledby="delbasketModalLabel" aria-hidden="true">
@@ -209,7 +210,8 @@
                 [% UNLESS ( grouped ) %]
                 <div id="toolbar" class="btn-toolbar">
                     <div class="btn-group"><a href="#" class="btn btn-small" id="reopenbutton"><i class="icon-refresh"></i> Reopen this basket</a></div>
-                    <div class="btn-group"><a href="[% script_name %]?op=export&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="exportbutton"><i class="icon-download"></i> Export this basket as CSV</a></div>
+                    <div class="btn-group"><a href="[% script_name %]?op=export&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="exportbutton"><i class="icon-download"></i> Export as CSV</a></div>
+                    <div class="btn-group"><a href="[% script_name %]?op=email&amp;basketno=[% basketno %]&amp;booksellerid=[% booksellerid %]" class="btn btn-small" id="emailvendorbutton"><i class="icon-download"></i> E-mail to vendor</a></div>
                 </div>
                 [% END %]
             [% END %]

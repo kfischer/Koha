@@ -442,18 +442,22 @@ sub SendAlerts {
             sendmail(%mail) or carp $Mail::Sendmail::error;
         }
     }
-    elsif ( $type eq 'claimacquisition' or $type eq 'claimissues' ) {
+    elsif ( $type eq 'claimacquisition' or $type eq 'claimissues' or $type eq 'orderacquisition' ) {
 
         # prepare the letter...
-        # search the biblionumber
-        my $strsth =  $type eq 'claimacquisition'
+        my $strsth;
+        my $sthorders;
+        my $dataorders;
+
+        if ( $type eq 'claimaquisition' or $type eq 'claimissues') {
+            my $strsth =  $type eq 'claimacquisition'
             ? qq{
             SELECT aqorders.*,aqbasket.*,biblio.*,biblioitems.*
             FROM aqorders
             LEFT JOIN aqbasket ON aqbasket.basketno=aqorders.basketno
             LEFT JOIN biblio ON aqorders.biblionumber=biblio.biblionumber
             LEFT JOIN biblioitems ON aqorders.biblionumber=biblioitems.biblionumber
-            WHERE aqorders.ordernumber IN (
+            WHERE aqorders.ordernumber IN (' . join(',', ('?') x @$externalid) . ')'
             }
             : qq{
             SELECT serial.*,subscription.*, biblio.*, aqbooksellers.*,
@@ -462,23 +466,45 @@ sub SendAlerts {
             LEFT JOIN subscription ON serial.subscriptionid=subscription.subscriptionid
             LEFT JOIN biblio ON serial.biblionumber=biblio.biblionumber
             LEFT JOIN aqbooksellers ON subscription.aqbooksellerid=aqbooksellers.id
-            WHERE serial.serialid IN (
+            WHERE serial.serialid IN (' . join(',', ('?') x @$externalid) . ')'
             };
 
-        if (!@$externalid){
-            carp "No Order seleted";
-            return { error => "no_order_seleted" };
+            if (!@$externalid){
+                carp "No order selected";
+                return { error => "no_order_seleted" };
+            }
+
+            $sthorders = $dbh->prepare($strsth);
+            $sthorders->execute(@$externalid);
+            $dataorders = $sthorders->fetchall_arrayref( {} );
         }
 
-        $strsth .= join( ",", @$externalid ) . ")";
-        my $sthorders = $dbh->prepare($strsth);
-        $sthorders->execute;
-        my $dataorders = $sthorders->fetchall_arrayref( {} );
+        if ( $type eq 'orderacquisition') {
+            $strsth = qq{
+            SELECT aqorders.*,aqbasket.*,biblio.*,biblioitems.*
+            FROM aqorders
+            LEFT JOIN aqbasket ON aqbasket.basketno=aqorders.basketno
+            LEFT JOIN biblio ON aqorders.biblionumber=biblio.biblionumber
+            LEFT JOIN biblioitems ON aqorders.biblionumber=biblioitems.biblionumber
+            WHERE aqbasket.basketno = ?
+            AND orderstatus IN ('new','ordered')
+            };
+
+            if (!$externalid){
+                carp "No basketnumber";
+                return { error => "no_basketno" };
+            }
+
+            $sthorders = $dbh->prepare($strsth);
+            $sthorders->execute($externalid);
+            $dataorders = $sthorders->fetchall_arrayref( {} );
+        }
 
         my $sthbookseller =
           $dbh->prepare("select * from aqbooksellers where id=?");
         $sthbookseller->execute( $dataorders->[0]->{booksellerid} );
         my $databookseller = $sthbookseller->fetchrow_hashref;
+        if ( $type eq 'orderacquisition' ) { $type = 'claimacquisition' }; #FIXME Add separate checkbox for acq order contact to vendor
         my $addressee =  $type eq 'claimacquisition' ? 'acqprimary' : 'serialsprimary';
         my $sthcontact =
           $dbh->prepare("SELECT * FROM aqcontacts WHERE booksellerid=? AND $type=1 ORDER BY $addressee DESC");
